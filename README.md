@@ -25,7 +25,13 @@ Files in this repository are listed as follows:
 
 ## How to Use the Script
 
-1. Configure your UIS. Enter your student ID and password as keyword arguments of function init() in complete_booking_thread().
+1. Configure your UIS. Create "UIS.json" in the same directory as multiple.py and add:
+```
+{
+    "username": "xxx", 
+    "password": "xxx"
+}
+```
 2. Set the desired booking time as the example in main thread demonstrated. Usually its the seven o'clock of the second day before the court.
 3. Specify the dates and times of your desired court respectively in the two lists given in the main thread. Note that they must be in pairs.
 4. Simply run the script.

@@ -214,3 +214,6 @@ screenshot.png
 
 # Web drivers
 MsEdgeDriver/
+
+# UIS
+UIS.json

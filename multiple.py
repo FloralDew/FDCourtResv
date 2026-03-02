@@ -1,8 +1,10 @@
-# 2026.2.14 started By floralDew
+# 2026.2.14 started By FloralDew
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
+# UIS
+import json
 # 显式等待
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -18,7 +20,7 @@ FOLLOWING_WEEK_XPATH = '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[1]/div/div[1
 PREVIOUS_WEEK_XPATH = '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[1]/div/div[1]/div[2]'
 
 # 启动浏览器, UIS登陆, 打开预约网站
-def init(num: int, username = "your_student_ID", password = "your_UIS_password", campus = 'Fenglin'):
+def init(num: int, username: str, password: str, campus = 'Fenglin'):
     print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 开始启动浏览器.")
     # 创建并启动浏览器
     browser_option = Options()
@@ -45,7 +47,7 @@ def init(num: int, username = "your_student_ID", password = "your_UIS_password",
     # 此时可能弹出确认框, 但这不是alert框. 如有, 点击确认
     try:
         print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 判断是否弹出了对话框...")
-        confirm_btn = driver.find_element(By.XPATH, '/html/body/div[5]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button')
+        confirm_btn = driver.find_element(By.XPATH, '/html/body/div[4]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button') # 第一个div到底是4还是5? 在寝室电脑上是4
         print(f"(线程{num}) 弹出了对话框. 点击确认.")
         driver.execute_script("arguments[0].scrollIntoView({block:'center'});", confirm_btn) # 防止ElementClickInterceptedException
         confirm_btn.click()
@@ -113,20 +115,24 @@ def auto_book(num: int, driver: webdriver.Edge, element_court, retry_times: int)
     # 点击"确认预约"
     book_btn = driver.find_element(By.XPATH, '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[2]/div/div[2]/div/button')
     try:
-        while True:
+        for i in range(200):
             book_btn.click()
             time.sleep(0.05)
-    except Exception as e:
-        print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) {str(e)[:70]}...") # 一般是stale element reference, 因为抢场成功会跳转页面
-
-    print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 点击抢场成功!")
+        else:
+            print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 10s内200次点击未返回, 可能抢场失败.")
+    except Exception as e: # 一般是stale element reference, 因为抢场成功会跳转页面
+        # print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) {str(e)[:70]}...") 
+        print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 点击抢场成功!")
 
 # 主函数. 通过它执行完整的创建浏览器-抢场过程.
 def complete_booking_thread(num: int, booking_time: datetime, court_date: str, court_time: str, 
                             stop_event: threading.Event, # 用于在浏览器打开后、抢场开始前KeyboardInterrupt
                             offset = 0 # 每个线程相对前一个线程抢场的偏移秒数. 由于加入了0.05s轮询, 可以为0
                             ):
-        driver = init(num) # 启动浏览器, UIS登陆, 打开预约网站
+        with open("UIS.json", 'r') as f: # UIS账号和密码
+            d = json.load(f)
+
+        driver = init(num, username=d["username"], password=d["password"]) # 启动浏览器, UIS登陆, 打开预约网站
 
         # 先判断今天是否能看到目标日的场次
         calendar_text = driver.find_element(By.CLASS_NAME, "week_calendar").text
@@ -162,9 +168,9 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
 
 if __name__ == "__main__":
     # 参数设置
-    booking_time = datetime(2026, 2, 18, 7, 0)
-    court_dates = ['2026-02-20', '2026-02-20']
-    court_times = ['08:00-09:00', '09:00-10:00'] # 必须一一对应.
+    booking_time = datetime(2026, 3, 2, 8, 45)
+    court_dates = ['2026-03-04', '2026-03-04']
+    court_times = ['19:00-20:00', '20:00-21:00'] # 必须一一对应.
 
     # 提前五分钟启动浏览器.
     delay = (booking_time - datetime.now()).total_seconds() - 300
