@@ -130,8 +130,8 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
                             offset = 0 # 每个线程相对前一个线程抢场的偏移秒数. 由于加入了0.05s轮询, 可以为0
                             ):
         with open("UIS.json", 'r') as f: # UIS账号和密码
-            d = json.load(f)
-
+            uis_list = json.load(f)
+        d = uis_list[num % len(uis_list)]
         driver = init(num, username=d["username"], password=d["password"]) # 启动浏览器, UIS登陆, 打开预约网站
 
         # 先判断今天是否能看到目标日的场次
@@ -172,7 +172,7 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
 if __name__ == "__main__":
     # 参数设置
     booking_time = datetime(2026, 3, 6, 7, 0)
-    court_dates = ['2026-03-08', '2026-03-09']
+    court_dates = ['2026-03-08', '2026-03-08']
     court_times = ['19:00-20:00', '20:00-21:00'] # 必须一一对应.
 
     # 提前三分钟启动浏览器.
