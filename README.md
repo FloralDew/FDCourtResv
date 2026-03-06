@@ -42,7 +42,7 @@ Most details are explained in the comments of the code.
 
 ### A High Level Overview
 
-- By repeated time.sleep(1800), the script remains silent until five minutes before seven.
+- By repeated time.sleep(1800), the script remains silent until three minutes before seven.
 - Then, browsers are initialized (The number of browsers depends on how many courts will be reserved simultaneously), each operated by a thread and responsible for one court.
 - Each thread gets the web element of the corresponding court button according to date and time:
   - First extract the text of the week calendar.
@@ -61,7 +61,8 @@ Below I'd like to elaborate on some important or interesting designs.
 - **Ways to speed the booking process**. During the development process, I came up with multiple approaches that contribute to booking speed.
   - First and foremost, it is known that refreshing the website is much slower than simply click the "next week" button, but few know they both refresh the booking state. In other words, you can click "next week" the moment it turns seven and the court will be available. The script copies aforementioned acts to ensure punctuality.
   - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. It saves 40% time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, sometimes the former approach leads to the aforementioned problem, but it's rare.
-  - Third, the script finds the web element of the court five minutes prior to the actual booking process, and thus save about 10ms by test.
+  - Third, the script finds the web element of the court three minutes prior to the actual booking process, and thus save about 10ms by test.
+  - Fourth, by clicking "previous week" and then "next week", the script makes sure the page where targeted court is on is preloaded.
   - Too frequent reserving can lead to failure. More specifically, a minimum time interval is required between two successive reservations. At first, argument "offset" in auto_book() function was defined to specify this interval, and was set to 3s by default. But then I found a more widely-applied way: repeatedly click the reserve button at high frequency until reservation succeeds.
 - **Important waits in the booking process.** Web programs is different from other programs, since loading takes time. Proper wait approaches are crucial for an efficient script.
   - **Implicit wait.** Once find_element() is called, implicit wait allows the script to wait for certain seconds before the element finally appears on the website. But presence doesn't mean clickable, so this approach is only adopted when the element is sure to have appeared for some time.

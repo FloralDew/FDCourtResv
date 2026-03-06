@@ -149,16 +149,19 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
                 )
             )
             calendar_text = driver.find_element(By.CLASS_NAME, "week_calendar").text
+        else: # 如果能看到. 这里点击前一周再后一周的目的是, 让点击"后一周"的网页被缓存, 避免抢场时真正点击后一周还要重新请求
+            driver.find_element(By.XPATH, PREVIOUS_WEEK_XPATH).click()
+            WebDriverWait(driver, 5, 0.2).until(EC.element_to_be_clickable((By.XPATH, FOLLOWING_WEEK_XPATH))).click()
 
         # 获取对应场次的element
         element_court = get_court_element(num, driver, calendar_text, court_date, court_time)
-        # 点击"前一周"
+        # 点击"前一周", 退回到目标场前一周的状态
         driver.find_element(By.XPATH, PREVIOUS_WEEK_XPATH).click()
         # 等待"后一周"按钮可被点击. 这行纯属增强鲁棒性. 一般情况下很长时间后才会执行auto_book函数.
         WebDriverWait(driver, 5, 0.2).until(EC.element_to_be_clickable((By.XPATH, FOLLOWING_WEEK_XPATH)))
 
         # 在精确时间调用抢场函数
-        delay = (booking_time - datetime.now()).total_seconds() + num * offset # 后面每个线程依次晚3s抢场, 防止"点击太频繁了"报错
+        delay = (booking_time - datetime.now()).total_seconds() + num * offset # 后面每个线程依次晚offset抢场, 防止"点击太频繁了"报错
         while delay > 2 and not stop_event.is_set(): # 每2s校准一次
             time.sleep(2)
             delay = (booking_time - datetime.now()).total_seconds() + num * offset
@@ -168,16 +171,17 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
 
 if __name__ == "__main__":
     # 参数设置
-    booking_time = datetime(2026, 3, 2, 8, 45)
-    court_dates = ['2026-03-04', '2026-03-04']
+    booking_time = datetime(2026, 3, 6, 7, 0)
+    court_dates = ['2026-03-08', '2026-03-09']
     court_times = ['19:00-20:00', '20:00-21:00'] # 必须一一对应.
 
-    # 提前五分钟启动浏览器.
-    delay = (booking_time - datetime.now()).total_seconds() - 300
+    # 提前三分钟启动浏览器.
+    SECONDS_BEFORE = 180
+    delay = (booking_time - datetime.now()).total_seconds() - SECONDS_BEFORE
     while delay > 1800: # 每30min校准一次
         print(f"[{datetime.now().strftime("%H:%M:%S.%f")}] 预计等待{delay}s后启动浏览器.")
         time.sleep(1800)
-        delay = (booking_time - datetime.now()).total_seconds() - 300
+        delay = (booking_time - datetime.now()).total_seconds() - SECONDS_BEFORE
     time.sleep(max(0, delay))
 
     stop_event = threading.Event()
