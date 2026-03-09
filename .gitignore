@@ -210,7 +210,8 @@ __marimo__/
 test.py
 test.txt
 test.ipynb
-screenshot.png
+*.png
+*.jpg
 
 # Web drivers
 MsEdgeDriver/

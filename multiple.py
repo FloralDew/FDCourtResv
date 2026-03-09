@@ -89,7 +89,7 @@ def auto_book(num: int, driver: webdriver.Edge, element_court, retry_times: int)
     )
     if '可预约' not in element_court.text:
         for i in range(retry_times):
-            print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 当前场次未开放或已约满, 下面进行第{i+1}次刷新尝试.") # 最多刷新三次
+            print(f"[{datetime.now().strftime("%H:%M:%S.%f")}](线程{num}) 当前场次未开放或已约满, 下面进行第{i+1}次刷新尝试.") # 最多刷新retry_times次
             # 点击"前一周"
             driver.find_element(By.XPATH, PREVIOUS_WEEK_XPATH).click()
             # 等待按钮可被点击后, 点击"后一周"
@@ -172,8 +172,8 @@ def complete_booking_thread(num: int, booking_time: datetime, court_date: str, c
 if __name__ == "__main__":
     # 参数设置
     booking_time = datetime(2026, 3, 6, 7, 0)
-    court_dates = ['2026-03-08', '2026-03-08']
-    court_times = ['19:00-20:00', '20:00-21:00'] # 必须一一对应.
+    court_dates = ['2026-03-12']
+    court_times = ['19:00-20:00'] # 必须一一对应.
 
     # 提前三分钟启动浏览器.
     SECONDS_BEFORE = 180

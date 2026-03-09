@@ -38,7 +38,7 @@ def init(username = "your_student_ID", password = "your_UIS_password", campus = 
     # 此时可能弹出确认框, 但这不是alert框. 如有, 点击确认
     try:
         print(f"[{datetime.now().strftime("%H:%M:%S.%f")}] 判断是否弹出了对话框...")
-        driver.find_element(By.XPATH, '/html/body/div[5]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button').click()
+        driver.find_element(By.XPATH, '/html/body/div[4]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button').click()
     finally:
         print(f"[{datetime.now().strftime("%H:%M:%S.%f")}] 判断完毕.")
         return driver
@@ -68,7 +68,7 @@ def auto_book(driver: webdriver.Edge, element_court, retry_times: int):
         
     if '可预约' not in element_court.text:
         for i in range(retry_times):
-            print(f"[{datetime.now().strftime("%H:%M:%S.%f")}] 当前场次未开放或已约满, 下面进行第{i+1}次刷新尝试.") # 最多刷新三次
+            print(f"[{datetime.now().strftime("%H:%M:%S.%f")}] 当前场次未开放或已约满, 下面进行第{i+1}次刷新尝试.") # 最多刷新retry_times次
             # 点击"前一周"
             driver.find_element(By.XPATH, '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[1]/div/div[1]/div[2]').click()
             # 等待按钮可被点击后, 点击"后一周"
