@@ -1,6 +1,6 @@
 # FDCourtResv
 
-In short, this is a selenium-based python script that helps to reserve sports courts **(especially the badminton court in Fenglin Campus, but extension interface remains accessible)** automatically.
+In short, this is a selenium-based python script that helps to reserve sports courts **(especially the badminton court on Fenglin Campus, but extension interface remains accessible)** automatically.
 
 ## Repo Overview
 
@@ -12,7 +12,7 @@ Files in this repository are listed as follows:
 ---
 - **[CourtReserver.py](CourtReserver.py)**. The class.
 - **[multiple_plus.py](multiple_plus.py)**. A more robust, class-encapsulated version of the booking script (latest).
-- **[watch.py](watch.py)**. Adds the function of booking the court once available when it is not 7 o'clock. (TBD)
+- **[watch.py](watch.py)**. Adds the function of booking the court once available when it is not 7 o'clock.
 ---
 - **readme.md**.
 
@@ -73,8 +73,8 @@ Below I'd like to elaborate on some important or interesting designs.
 
 - **Ways to speed the booking process**. During the development process, I came up with multiple approaches that contribute to booking speed.
   - First and foremost, it is known that refreshing the website is much slower than simply click the "next week" button, but few know they both refresh the booking state. In other words, you can click "next week" the moment it turns seven and the court will be available. The script copies aforementioned acts to ensure punctuality.
-  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. It (0.46s per cycle, tested in Science Library) saves about 30% of time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, the former approach leads to the aforementioned problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep(0.01)` can amazingly decrease this rate to 22%, while `time.sleep(0.05)` to 9%. The script adopts the latter.
-  - Third, the script finds the web element of the court three minutes prior to the actual booking process, and thus save about 10ms by test.
+  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. By step by step debugging, I found that this attribute appears very shortly after the button is clicked, and disappear right after the calendar is switched. It (0.46s per cycle, tested in Science Library on 3/9/2026) saves about 30% of time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, it leads to the aforementioned problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep()` is necessary.
+  - Third, the script finds the web element of the court and the booking button three minutes prior to the actual booking process, and thus save about 20ms by test.
   - Fourth, by clicking "previous week" and then "next week", the script ensures the page containing the targeted court is preloaded.
   - Too frequent reserving can lead to failure. More specifically, a minimum time interval is required between two successive reservations using one UIS. At first, argument "offset" in auto_book() function was defined to specify this interval, and was set to 3s by default. But then I found a more widely-applied way: repeatedly click the reserve button at high frequency until reservation succeeds.
   - As you can tell in the previous point, if reservations are made using different account simultaneously, the problem can be avoided. The script supports that.
