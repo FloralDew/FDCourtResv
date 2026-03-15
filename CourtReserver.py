@@ -6,8 +6,7 @@ from selenium.webdriver.common.by import By
 # 显式等待
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import StaleElementReferenceException
-from selenium.common.exceptions import ElementClickInterceptedException
+import selenium.common.exceptions as ex
 # 时间相关
 from datetime import datetime
 import time
@@ -18,15 +17,15 @@ import threading
 
 time_stamp = lambda: datetime.now().strftime("%H:%M:%S.%f") # 时间格式化输出
 
-class CourtReserver(): # 封装成类, 便于管理和维护
+class WebController():
 
-    def __wait_send_keys(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
-                         text, timeout=10, poll_freq=0.2, clear=False): # 等待输入框并输入内容. 私有方法
+    def wait_send_keys(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
+                         text, timeout=10, poll_freq=0.1, clear=False): # 等待输入框并输入内容. 私有方法
         wait = WebDriverWait(
             self.driver,
             timeout,
             poll_freq,
-            ignored_exceptions=[StaleElementReferenceException]
+            ignored_exceptions=[ex.StaleElementReferenceException]
         )
         def send(driver): # 由until传入
             if isinstance(mark, webdriver.remote.webelement.WebElement): # 无作用域
@@ -42,7 +41,7 @@ class CourtReserver(): # 封装成类, 便于管理和维护
         wait.until(send) # 这样才能真正避免StaleElementReferenceException
 
     # 等待并点击元素(自动处理遮挡/刷新)
-    def __wait_click(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
+    def wait_click(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
                      timeout=10, poll_freq=0.1):
         # 输入webElement时, 警惕Stale造成的TimeOut错误
         wait = WebDriverWait(
@@ -50,8 +49,8 @@ class CourtReserver(): # 封装成类, 便于管理和维护
             timeout,
             poll_freq,
             ignored_exceptions=[
-                StaleElementReferenceException,
-                ElementClickInterceptedException,
+                ex.StaleElementReferenceException,
+                ex.ElementClickInterceptedException,
             ]
         )
 
@@ -67,9 +66,11 @@ class CourtReserver(): # 封装成类, 便于管理和维护
         
         wait.until(click)
 
-    def __wait_calendar_refresh(self, poll_freq=0.1, xtra_wait=0.05): # 等待日历刷新完毕
+class CourtReserver(WebController): # 封装成类, 便于管理和维护
+
+    def wait_calendar_refresh(self, timeout=10, poll_freq=0.1, xtra_wait=0.05): # 等待日历刷新完毕
         time.sleep(xtra_wait / 2) # 以时间换准确率. 详见README.
-        WebDriverWait(self.driver, 5, poll_freq).until( # 等待日历刷新完毕
+        WebDriverWait(self.driver, timeout, poll_freq).until( # 等待日历刷新完毕
             EC.none_of( # 条件取反. 不能用not
                 EC.text_to_be_present_in_element_attribute( # 日历类中包含loading-parent-box. 注意这个日历不是week_calendar, 是它的上级
                     (By.XPATH, '/html/body/div[1]/div/div[3]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]'), 
@@ -95,21 +96,31 @@ class CourtReserver(): # 封装成类, 便于管理和维护
         browser_option.add_argument('--no-sandbox')
         browser_option.add_experimental_option('detach', True)
         driver = webdriver.Edge(service=Service(r"./MsEdgeDriver/msedgedriver.exe"), options=browser_option)
-        driver.implicitly_wait(8)
+        driver.implicitly_wait(10)
         driver.maximize_window() # 防止ElementClickInterceptedException
         self.driver = driver
 
         # 直接打开枫林学生活动中心-羽毛球的预约网站
-        if campus == 'Fenglin':
-            driver.get(r"https://booking.fudan.edu.cn/reservation/fe/site/reservationInfo?id=1169")
-        #################### 在此处添加其他校区场地的网址 #######################
+        match campus:
+            case 'Fenglin': court_id = 1169
+            case 'Handan_Zhengda': court_id = 951
+            case 'Handan_Beiqu': court_id = 938
+            case _: raise ValueError(f'No such court named {campus}.')
 
-        # 由于不存在cookies, 会跳转到登陆界面. 使用显式等待以解决StaleElementReferenceException
-        self.__wait_send_keys((By.ID, "login-username"), username)
-        self.__wait_send_keys((By.ID, "login-password"), password)
+        bflag = False
+        while not bflag:
+            try:
+                driver.get(f"https://booking.fudan.edu.cn/reservation/fe/site/reservationInfo?id={court_id}")
+                # 由于不存在cookies, 会跳转到登陆界面. 使用显式等待以解决StaleElementReferenceException
+                self.wait_send_keys((By.ID, "login-username"), username)
+                self.wait_send_keys((By.ID, "login-password"), password)
+                bflag = True
+            except Exception as e: # 有时候网页未能正常打开
+                print(f"[{time_stamp()}](线程{thread_num}) 浏览器启动遇到问题. {str(e)[:70]}..., 正在刷新...")
+                driver.refresh()
         
         # 点击"登录"按钮
-        self.__wait_click((By.XPATH, '//*[@id="content_login"]/div[2]/div[2]/button'))
+        self.wait_click((By.XPATH, '//*[@id="content_login"]/div[2]/div[2]/button'))
 
         # 此时可能弹出确认框, 但这不是alert框. 如有, 点击确认
         try:
@@ -119,7 +130,7 @@ class CourtReserver(): # 封装成类, 便于管理和维护
             print(f"[{time_stamp()}](线程{thread_num}) 弹出了对话框. 点击确认.")
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", confirm_btn) # 防止ElementClickInterceptedException
             time.sleep(1) # 增强鲁棒性, 等待可能的滚动动画
-            self.__wait_click(confirm_btn)
+            self.wait_click(confirm_btn)
             time.sleep(1) # 等待消失动画
         except Exception as e:
             print(f"[{time_stamp()}](线程{thread_num}) 未弹出对话框. {str(e)[:70]}...")
@@ -134,12 +145,12 @@ class CourtReserver(): # 封装成类, 便于管理和维护
         calendar_text = self.driver.find_element(By.CLASS_NAME, "week_calendar").text
         if self.court_date not in calendar_text: # 如果不能看到
             # 点击"后一周"
-            self.__wait_click(self.next_week_btn)
-            self.__wait_calendar_refresh(1) # 确保刷新完毕
+            self.wait_click(self.next_week_btn)
+            self.wait_calendar_refresh(xtra_wait=1) # 确保刷新完毕
             calendar_text = self.driver.find_element(By.CLASS_NAME, "week_calendar").text
         else: # 如果能看到. 这里点击前一周再后一周的目的是, 让点击"后一周"的网页被缓存, 避免抢场时真正点击后一周还要重新请求
-            self.__wait_click(self.previous_week_btn)
-            self.__wait_click(self.next_week_btn)
+            self.wait_click(self.previous_week_btn)
+            self.wait_click(self.next_week_btn)
         self.calendar_text = calendar_text
         print(f"[{time_stamp()}](线程{self.thread_num}) 读取和预加载完毕.")
 
@@ -159,21 +170,22 @@ class CourtReserver(): # 封装成类, 便于管理和维护
 
         if back_to_previous_week: # 用于autobook时, 需要退回前一周
             # 点击"前一周", 退回到目标场前一周的状态
-            self.__wait_click(self.previous_week_btn)
+            self.wait_click(self.previous_week_btn)
 
     def auto_book(self, retry_times: int):
         print(f"[{time_stamp()}](线程{self.thread_num}) 调用抢场函数...")
         # 点击"后一周"
-        self.__wait_click(self.next_week_btn)
-        self.__wait_calendar_refresh(0.03)
+        self.wait_click(self.next_week_btn)
+        self.wait_calendar_refresh(xtra_wait=0.03)
         i = 0
         while i < retry_times and '可预约' not in self.court_element.text:
             print(f"[{time_stamp()}](线程{self.thread_num}) 当前场次{self.court_element.text}, 下面进行第{i+1}次刷新尝试.") # 最多刷新retry_times次
             # 点击"前一周"
-            self.__wait_click(self.previous_week_btn) # 因为有循环, 这里第一次点击也使用了显式等待
+            self.wait_click(self.previous_week_btn) # 因为有循环, 这里第一次点击也使用了显式等待
+            # 点击前一周后, 会出现一个类为pc-loading的元素挡住按钮, 而wait_click中有处理ElementClickInterceptedException的逻辑, 因此不需要等待日历刷新完毕
             # 点击"后一周"
-            self.__wait_click(self.next_week_btn)
-            self.__wait_calendar_refresh()
+            self.wait_click(self.next_week_btn)
+            self.wait_calendar_refresh()
             i += 1
 
         if '可预约' not in self.court_element.text:
@@ -181,7 +193,7 @@ class CourtReserver(): # 封装成类, 便于管理和维护
             return
 
         # 点击场次
-        self.court_element.click() # 这里为了保证速度没有使用__wait_click()
+        self.court_element.click() # 这里为了保证速度没有使用wait_click()
         # 点击"确认预约"
         try:
             for i in range(200):
@@ -195,12 +207,12 @@ class CourtReserver(): # 封装成类, 便于管理和维护
     def watch_court(self, stop_event: threading.Event, poll_freq=10):
         print(f'[{time_stamp()}] 开始盯场...')
         while '可预约' not in self.court_element.text:
-            self.__wait_click(self.previous_week_btn)
+            self.wait_click(self.previous_week_btn)
             time.sleep(poll_freq)
             if stop_event.is_set():
                 return
-            self.__wait_click(self.next_week_btn)
-            self.__wait_calendar_refresh()
-        self.__wait_click(self.court_element)
-        self.__wait_click(self.book_btn)
+            self.wait_click(self.next_week_btn)
+            self.wait_calendar_refresh()
+        self.wait_click(self.court_element)
+        self.wait_click(self.book_btn)
         print(f"[{time_stamp()}] 抓场成功!")

@@ -216,5 +216,5 @@ test.ipynb
 # Web drivers
 MsEdgeDriver/
 
-# UIS
-UIS.json
+# config
+*.json

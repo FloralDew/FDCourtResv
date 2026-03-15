@@ -1,6 +1,6 @@
 # FDCourtResv
 
-In short, this is a selenium-based python script that helps to reserve sports courts **(especially the badminton court on Fenglin Campus, but extension interface remains accessible)** automatically.
+In short, this is a selenium-based python script that helps to reserve sports courts automatically.
 
 ## Repo Overview
 
@@ -28,26 +28,106 @@ Files in this repository are listed as follows:
 > - switch start-type of **edgeupdate** from Auto to disabled
 > - switch start-type of **edgeupdatem** from Manual to disabled
 
-
 ## How to Use the Script
-(For multiple_plus.py)
-1. Configure your UIS. Create "UIS.json" in the same directory as multiple_plus.py and add (more than one UIS if you wish to reserve multiple courts simultaneously with different people's account. This can avert "too frequent reservations" error and therefore add to success rate):
+1. Configure your UIS and targeted court(s). Create "config.json" in working directory and add:
 ```
-[
-    {
-        "username" : "xxx",
-        "password" : "xxx"
-    },
-    {
-        "username" : "xxx",
-        "password" : "xxx"
-    },
-    ...
-]
+{
+    "UIS":
+    [
+        {
+            "username": "xxx", 
+            "password": "xxx"
+        },
+        {
+            "username": "xxx", 
+            "password": "xxx"
+        },
+        ...
+    ],
+
+    "booking_time": "2026-03-15 14:35:00",
+
+    "courts":
+    [
+        {
+            "campus": "Fenglin",
+            "date": "2026-03-17",
+            "time": "20:00-21:00"
+        },
+        {
+            "campus": "Fenglin",
+            "date": "2026-03-17",
+            "time": "19:00-20:00"
+        },
+        ...
+    ]
+}
 ```
-2. Set the desired booking time as the example in main thread demonstrated. Usually its the seven o'clock of the second day before the court.
-3. Specify the dates and times of your desired court respectively in the two lists given in the main thread. Note that they must be in pairs.
-4. Simply run the script.
+in which "booking_time" denotes when you want to make the reservation, usually the seven o'clock of the second day before the court.
+
+2. Simply run multiple_plus.py(reserve at certain time, retry quickly if fail) **OR** watch.py(check every few seconds and reserve once available). If you choose the latter, parameter "booking_time" will be ignored.
+
+### Typical Terminal Output
+#### Success
+```
+[00:27:33.152897] 预计等待23366.847118s后启动浏览器.
+...
+[05:57:33.160762] 预计等待3566.839248s后启动浏览器.
+>> 线程0负责: Fenglin 2026-03-16 19:00-20:00
+>> 线程1负责: Fenglin 2026-03-16 20:00-21:00
+[06:57:00.001581](线程0) 开始启动浏览器.
+[06:57:00.004376](线程1) 开始启动浏览器.
+[06:57:01.771717](线程0) 判断是否弹出了对话框...
+[06:57:01.986354](线程1) 判断是否弹出了对话框...
+[06:57:09.783834](线程0) 未弹出对话框. Message: no such element: Unable to locate element: {"method":"xpath",...
+[06:57:09.837341](线程0) 浏览器启动完毕.
+[06:57:09.837431](线程0) 正在读取和预加载日历...
+[06:57:10.066166](线程1) 未弹出对话框. Message: no such element: Unable to locate element: {"method":"xpath",...
+[06:57:10.084047](线程1) 浏览器启动完毕.
+[06:57:10.084173](线程1) 正在读取和预加载日历...
+[06:57:10.128238](线程0) 读取和预加载完毕.
+[06:57:10.128334](线程0) 正在获取目标场次和预约按钮的element...
+[06:57:10.152930](线程0) 获取完毕!
+[06:57:10.364945](线程1) 读取和预加载完毕.
+[06:57:10.365030](线程1) 正在获取目标场次和预约按钮的element...
+[06:57:10.380029](线程1) 获取完毕!
+[07:00:00.000117](线程1) 调用抢场函数...
+[07:00:00.000160](线程0) 调用抢场函数...
+[07:00:01.275263](线程0) 点击抢场成功! Message: stale element reference: stale element not found in the curre...
+[07:00:01.740788](线程1) 点击抢场成功! Message: stale element reference: stale element not found in the curre...
+[07:00:02.091422] 所有线程均已结束.
+```
+#### Fail
+```
+>> 线程0负责: Fenglin 2026-03-17 20:00-21:00
+>> 线程1负责: Fenglin 2026-03-17 19:00-20:00
+[14:32:59.869874](线程0) 开始启动浏览器.
+[14:32:59.870030](线程1) 开始启动浏览器.
+[14:33:03.097994](线程1) 判断是否弹出了对话框...
+[14:33:03.208332](线程0) 判断是否弹出了对话框...
+[14:33:13.115354](线程1) 未弹出对话框. Message: no such element: Unable to locate element: {"method":"xpath",...
+[14:33:13.126294](线程1) 浏览器启动完毕.
+[14:33:13.126714](线程1) 正在读取和预加载日历...
+[14:33:13.238766](线程0) 未弹出对话框. Message: no such element: Unable to locate element: {"method":"xpath",...
+[14:33:13.303741](线程0) 浏览器启动完毕.
+[14:33:13.303872](线程0) 正在读取和预加载日历...
+[14:33:14.273049](线程1) 读取和预加载完毕.
+[14:33:14.273892](线程1) 正在获取目标场次和预约按钮的element...
+[14:33:14.289771](线程1) 获取完毕!
+[14:33:14.634401](线程0) 读取和预加载完毕.
+[14:33:14.634660](线程0) 正在获取目标场次和预约按钮的element...
+[14:33:14.666044](线程0) 获取完毕!
+[14:35:00.000595](线程0) 调用抢场函数...
+[14:35:00.001138](线程1) 调用抢场函数...
+[14:35:00.263228](线程0) 当前场次约满 (4/4), 下面进行第1次刷新尝试.
+[14:35:00.266357](线程1) 当前场次约满 (4/4), 下面进行第1次刷新尝试.
+...
+[14:35:01.486466](线程1) 当前场次约满 (4/4), 下面进行第5次刷新尝试.
+[14:35:01.502873](线程0) 当前场次约满 (4/4), 下面进行第5次刷新尝试.
+[14:35:01.800446](线程1) 5次刷新后仍未开放或已约满, 抢场失败.
+[14:35:01.871505](线程0) 5次刷新后仍未开放或已约满, 抢场失败.
+[14:35:01.941770] 所有线程均已结束.
+```
 
 ## How it Works
 
@@ -73,7 +153,7 @@ Below I'd like to elaborate on some important or interesting designs.
 
 - **Ways to speed the booking process**. During the development process, I came up with multiple approaches that contribute to booking speed.
   - First and foremost, it is known that refreshing the website is much slower than simply click the "next week" button, but few know they both refresh the booking state. In other words, you can click "next week" the moment it turns seven and the court will be available. The script copies aforementioned acts to ensure punctuality.
-  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. By step by step debugging, I found that this attribute appears very shortly after the button is clicked, and disappear right after the calendar is switched. It (0.46s per cycle, tested in Science Library on 3/9/2026) saves about 30% of time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, it leads to the aforementioned problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep()` is necessary.
+  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. By step by step debugging, I found that this attribute appears very shortly after the button is clicked, and disappears right after the calendar switches. It (0.46s per cycle, tested in Science Library on 3/9/2026) saves about 30% of time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, it leads to the above problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep()` is necessary.
   - Third, the script finds the web element of the court and the booking button three minutes prior to the actual booking process, and thus save about 20ms by test.
   - Fourth, by clicking "previous week" and then "next week", the script ensures the page containing the targeted court is preloaded.
   - Too frequent reserving can lead to failure. More specifically, a minimum time interval is required between two successive reservations using one UIS. At first, argument "offset" in auto_book() function was defined to specify this interval, and was set to 3s by default. But then I found a more widely-applied way: repeatedly click the reserve button at high frequency until reservation succeeds.

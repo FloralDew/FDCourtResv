@@ -3,17 +3,19 @@ from CourtReserver import *
 import json
 import threading
 
-def watching_thread(thread_num: int, court_date: str, court_time: str, stop_event: threading.Event):
-    with open("UIS.json", 'r') as f: # UIS账号和密码
-        uis_list = json.load(f)
-    d = uis_list[thread_num % len(uis_list)]
+def watching_thread(thread_num: int, campus: str, court_date: str, court_time: str, stop_event: threading.Event):
+    with open("config.json", 'r') as f: # UIS账号和密码
+        d = json.load(f)
+    uis_lst = d["UIS"]
+    uis = uis_lst[thread_num % len(uis_lst)]
 
     courtReserver = CourtReserver(
         thread_num=thread_num,
-        username=d["username"],
-        password=d["password"],
+        username=uis["username"],
+        password=uis["password"],
         court_date=court_date,
-        court_time=court_time
+        court_time=court_time,
+        campus=campus
     )
 
     courtReserver.preload_calendar()
@@ -21,14 +23,18 @@ def watching_thread(thread_num: int, court_date: str, court_time: str, stop_even
     courtReserver.watch_court(stop_event=stop_event)
 
 if __name__ == "__main__":
-    court_dates = ['2026-03-13', '2026-03-13']
-    court_times = ['20:00-21:00', '19:00-20:00'] # 必须一一对应.
+    # 参数设置
+    with open('config.json', 'r') as f:
+        d = json.load(f)
+    booking_time = datetime.strptime(d["booking_time"], r"%Y-%m-%d %H:%M:%S")
+    courts_lst = d["courts"]
     stop_event = threading.Event()
     # 依次启动多个浏览器
     threads = []
-    for i in range(len(court_dates)):
-        t = threading.Thread(target=watching_thread, args=(i, court_dates[i], court_times[i], stop_event))
-        print(f">> 线程{i}负责: {court_dates[i]} {court_times[i]}")
+    for i in range(len(courts_lst)):
+        t = threading.Thread(target=watching_thread, args=(
+            i, courts_lst[i]["campus"], courts_lst[i]["date"], courts_lst[i]["time"], stop_event))
+        print(f">> 线程{i}负责: {courts_lst[i]["campus"]} {courts_lst[i]["date"]} {courts_lst[i]["time"]}")
         t.start()
         threads.append(t)
 
