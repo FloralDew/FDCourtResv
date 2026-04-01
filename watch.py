@@ -1,7 +1,8 @@
 # 2026.3.9 started By FloralDew
-from CourtReserver import *
+from CourtReserver import CourtReserver, time_stamp
 import json
 import threading
+import time
 
 def watching_thread(thread_num: int, campus: str, court_date: str, court_time: str, stop_event: threading.Event):
     with open("config.json", 'r') as f: # UIS账号和密码
@@ -26,7 +27,6 @@ if __name__ == "__main__":
     # 参数设置
     with open('config.json', 'r') as f:
         d = json.load(f)
-    booking_time = datetime.strptime(d["booking_time"], r"%Y-%m-%d %H:%M:%S")
     courts_lst = d["courts"]
     stop_event = threading.Event()
     # 依次启动多个浏览器

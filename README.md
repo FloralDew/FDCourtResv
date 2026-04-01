@@ -7,12 +7,12 @@ In short, this is a selenium-based python script that helps to reserve sports co
 Files in this repository are listed as follows:
 
 - **[LearnSelenium.ipynb](LearnSelenium.ipynb)**. A brief selenium tutorial. It is basically all you need to understand the code in the script.
-- **[single.py](single.py)**. The primary version of the script with junior waiting method. It is designed for only one court.
-- **[multiple.py](multiple.py)**. The second version of the booking script.
+- **derpecated/[single.py](single.py)**. The primary version of the script with basic waiting mechanism, designed for single-court reservation only.
+- **deprecated/[multiple.py](multiple.py)**. The second version of the booking script, capable of multiple-court reservation.
 ---
 - **[CourtReserver.py](CourtReserver.py)**. The class.
 - **[multiple_plus.py](multiple_plus.py)**. A more robust, class-encapsulated version of the booking script (latest).
-- **[watch.py](watch.py)**. Adds the function of booking the court once available when it is not 7 o'clock.
+- **[watch.py](watch.py)**. Adds support for booking the court once available when it is not 7 o'clock.
 ---
 - **readme.md**.
 
@@ -25,11 +25,11 @@ Files in this repository are listed as follows:
 > To maintain stability, it is strongly recommended to disable the Auto-update of Edge. To do it: 
 >
 > - run services.msc
-> - switch start-type of **edgeupdate** from Auto to disabled
-> - switch start-type of **edgeupdatem** from Manual to disabled
+> - switch the start-type of **edgeupdate** from Auto to disabled
+> - switch the start-type of **edgeupdatem** from Manual to disabled
 
 ## How to Use the Script
-1. Configure your UIS and targeted court(s). Create "config.json" in working directory and add:
+1. Configure your UIS and targeted court(s). Create "config.json" in the working directory and add:
 ```
 {
     "UIS":
@@ -45,7 +45,7 @@ Files in this repository are listed as follows:
         ...
     ],
 
-    "booking_time": "2026-03-15 14:35:00",
+    "booking_time": "2026-03-15 14:35:00.0",
 
     "courts":
     [
@@ -63,9 +63,17 @@ Files in this repository are listed as follows:
     ]
 }
 ```
-in which "booking_time" denotes when you want to make the reservation, usually the seven o'clock of the second day before the court.
+in which "booking_time" denotes the reservation time (decimal **CANNOT** be omitted), usually two days prior to the court date. (However, it is recommended to set an earlier time, like 06:59:57.5, and increase retry_times to contend with network congestion.)
 
-2. Simply run multiple_plus.py(reserve at certain time, retry quickly if fail) **OR** watch.py(check every few seconds and reserve once available). If you choose the latter, parameter "booking_time" will be ignored.
+2. Simply run multiple_plus.py (reserve at certain time, retry quickly if it fails) **OR** watch.py (check every few seconds and reserve once available). If you choose the latter, parameter "booking_time" will be ignored.
+
+### IMPORTANT NOTES
+
+Successful auto reservation can succeed **ONLY** when:
+
+- Your PC doesn't hibernate or sleep
+- Anti-virus software doesn't stop the script from opening the browser
+- Windows update doesn't reboot your PC when you are asleep
 
 ### Typical Terminal Output
 #### Success
@@ -136,7 +144,7 @@ Most details are explained in the comments of the code.
 ### A High Level Overview
 
 - By repeated `time.sleep(1800)`, the script remains silent until three minutes before seven.
-- Then, browsers are initialized (The number of browsers depends on how many courts will be reserved simultaneously), each operated by a thread and responsible for one court.
+- Then, browsers are initialized (the number of browsers depends on how many courts will be reserved simultaneously), each operated by a thread and responsible for one court.
 - Each thread gets the web element of the corresponding court button according to date and time:
   - First extract the text of the week calendar.
   - Then use regular expression to extract all dates and times that exist in the calendar as two lists.
@@ -144,7 +152,7 @@ Most details are explained in the comments of the code.
 
 - Switch to the previous week page and counts down to seven.
 - The instant it turns seven, all threads click "next week", then the court, and finally the confirm button.
-  - If it displays "Not open" or "Full" instead of "Available" on the court button, the script will go through a three-time retry (three times by default, and configurable by argument "retry_times" in function auto_book()). Each clicks "previous week" then "next week" to refresh the calendar.
+  - If it displays "Not open" or "Full" instead of "Available" on the court button, the script will go through a three-time retry (configurable by argument "retry_times" in function auto_book()). Each clicks "previous week" then "next week" to refresh the calendar.
 
 
 ### Muse
@@ -153,7 +161,7 @@ Below I'd like to elaborate on some important or interesting designs.
 
 - **Ways to speed the booking process**. During the development process, I came up with multiple approaches that contribute to booking speed.
   - First and foremost, it is known that refreshing the website is much slower than simply click the "next week" button, but few know they both refresh the booking state. In other words, you can click "next week" the moment it turns seven and the court will be available. The script copies aforementioned acts to ensure punctuality.
-  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappear. By step by step debugging, I found that this attribute appears very shortly after the button is clicked, and disappears right after the calendar switches. It (0.46s per cycle, tested in Science Library on 3/9/2026) saves about 30% of time compared to waiting until certain text (say, the date of target court) appears in the calendar. However, it leads to the above problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep()` is necessary.
+  - Second, the script awaits the calendar to be refreshed (This is rather important, since premature click can lead to clicking the stale court) in a clever way: wait until the attribute "loading-parent-box" disappears. By step by step debugging, I found that this attribute appears very shortly after the button is clicked, and disappears right after the calendar switches. It (0.46s per cycle, tested in Science Library on 3/9/2026) reduces time spent by 30% compared to waiting until certain text (say, the date of target court) appears in the calendar. However, it leads to the above problem (40% chance of clicking the stale court). To reduce uncertainty, a `time.sleep()` is necessary.
   - Third, the script finds the web element of the court and the booking button three minutes prior to the actual booking process, and thus save about 20ms by test.
   - Fourth, by clicking "previous week" and then "next week", the script ensures the page containing the targeted court is preloaded.
   - Too frequent reserving can lead to failure. More specifically, a minimum time interval is required between two successive reservations using one UIS. At first, argument "offset" in auto_book() function was defined to specify this interval, and was set to 3s by default. But then I found a more widely-applied way: repeatedly click the reserve button at high frequency until reservation succeeds.

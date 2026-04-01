@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 # UIS
 import json
-    
+
 # 主函数. 通过它执行完整的创建浏览器-抢场过程.
 def booking_thread(thread_num: int, booking_time: datetime, campus: str, court_date: str, court_time: str, 
                             stop_event: threading.Event, # 用于在浏览器打开后、抢场开始前KeyboardInterrupt
@@ -37,13 +37,13 @@ def booking_thread(thread_num: int, booking_time: datetime, campus: str, court_d
         delay = (booking_time - datetime.now()).total_seconds() + thread_num * offset
     if not stop_event.is_set():
         time.sleep(max(0, delay))
-        courtReserver.auto_book(retry_times=5)
+        courtReserver.auto_book(retry_times=10)
 
 if __name__ == "__main__":
     # 参数设置
     with open('config.json', 'r') as f:
         d = json.load(f)
-    booking_time = datetime.strptime(d["booking_time"], r"%Y-%m-%d %H:%M:%S")
+    booking_time = datetime.strptime(d["booking_time"], r"%Y-%m-%d %H:%M:%S.%f")
     courts_lst = d["courts"]
 
     # 提前三分钟启动浏览器.
