@@ -14,6 +14,7 @@ def watching_thread(thread_num: int, campus: str, court_date: str, court_time: s
         thread_num=thread_num,
         username=uis["username"],
         password=uis["password"],
+        tel=uis["tel"],
         court_date=court_date,
         court_time=court_time,
         campus=campus

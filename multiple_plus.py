@@ -22,6 +22,7 @@ def booking_thread(thread_num: int, booking_time: datetime, campus: str, court_d
         thread_num=thread_num,
         username=uis["username"],
         password=uis["password"],
+        tel=uis["tel"],
         court_date=court_date,
         court_time=court_time,
         campus=campus
@@ -37,7 +38,7 @@ def booking_thread(thread_num: int, booking_time: datetime, campus: str, court_d
         delay = (booking_time - datetime.now()).total_seconds() + thread_num * offset
     if not stop_event.is_set():
         time.sleep(max(0, delay))
-        courtReserver.auto_book(retry_times=10)
+        courtReserver.auto_book(retry_times=d["retry_times"])
 
 if __name__ == "__main__":
     # 参数设置
@@ -45,6 +46,8 @@ if __name__ == "__main__":
         d = json.load(f)
     booking_time = datetime.strptime(d["booking_time"], r"%Y-%m-%d %H:%M:%S.%f")
     courts_lst = d["courts"]
+    PARALLEL = 1
+    courts_lst = courts_lst * PARALLEL # 并行, 提高成功率
 
     # 提前三分钟启动浏览器.
     SECONDS_BEFORE = 180

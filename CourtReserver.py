@@ -68,7 +68,7 @@ class WebController():
 
 class CourtReserver(WebController): # 封装成类, 便于管理和维护
 
-    def wait_calendar_refresh(self, timeout=10, poll_freq=0.1, xtra_wait=0.05): # 等待日历刷新完毕
+    def wait_calendar_refresh(self, timeout=10, poll_freq=0.1, xtra_wait=0.1): # 等待日历刷新完毕
         time.sleep(xtra_wait / 2) # 以时间换准确率. 详见README.
         WebDriverWait(self.driver, timeout, poll_freq).until( # 等待日历刷新完毕
             EC.none_of( # 条件取反. 不能用not
@@ -81,11 +81,10 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
         )
         time.sleep(xtra_wait / 2) # 以时间换准确率. 详见README.
 
-    def __init__(self, thread_num: int, username: str, password: str, court_date: str, court_time: str, campus = 'Fenglin'):
+    def __init__(self, thread_num: int, username: str, password: str, tel: str, court_date: str, court_time: str, campus = 'Fenglin'):
         self.thread_num = thread_num
         self.court_date = court_date
         self.court_time = court_time
-        self.campus = campus
         self.calendar_text = ''
         self.court_element = None
         self.book_btn = None
@@ -97,7 +96,7 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
         browser_option.add_experimental_option('detach', True)
         driver = webdriver.Edge(service=Service(r"./MsEdgeDriver/msedgedriver.exe"), options=browser_option)
         driver.implicitly_wait(10)
-        driver.maximize_window() # 防止ElementClickInterceptedException
+        driver.maximize_window()
         self.driver = driver
 
         # 直接打开枫林学生活动中心-羽毛球的预约网站
@@ -135,8 +134,12 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
         except Exception as e:
             print(f"[{time_stamp()}](线程{thread_num}) 未弹出对话框. {str(e)[:70]}...")
         finally:
+            driver.execute_script("document.body.style.zoom='0.3'") # 防止ElementClickInterceptedException
             self.previous_week_btn = driver.find_element(By.XPATH, '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[1]/div/div[1]/div[2]')
             self.next_week_btn = driver.find_element(By.XPATH, '//*[@id="__nuxt"]/div/div[3]/div[2]/div/div[1]/div/div[1]/div[2]/div[2]/div[1]/div/div[1]/div[4]')
+            # 2026.4.8更新 输入手机号. 这里使用clear = True没用
+            self.wait_click((By.CLASS_NAME, 'n-base-clear')) # 手动点击清除
+            self.wait_send_keys((By.XPATH, '/html/body/div[1]/div/div[3]/div[2]/div/div[2]/div/div[2]/form/div/div[1]/div/div[1]/div[1]/input'), tel)
             print(f"[{time_stamp()}](线程{thread_num}) 浏览器启动完毕.")
 
     def preload_calendar(self):
@@ -176,7 +179,7 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
         print(f"[{time_stamp()}](线程{self.thread_num}) 调用抢场函数...")
         # 点击"后一周"
         self.wait_click(self.next_week_btn)
-        self.wait_calendar_refresh(xtra_wait=0.03)
+        self.wait_calendar_refresh(xtra_wait = 0.05)
         i = 0
         while i < retry_times and '可预约' not in self.court_element.text:
             print(f"[{time_stamp()}](线程{self.thread_num}) 当前场次{self.court_element.text}, 下面进行第{i+1}次刷新尝试.") # 最多刷新retry_times次

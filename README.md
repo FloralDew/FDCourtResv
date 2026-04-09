@@ -36,36 +36,38 @@ Files in this repository are listed as follows:
     [
         {
             "username": "xxx", 
-            "password": "xxx"
+            "password": "xxx",
+            "tel": "xxx"
         },
         {
             "username": "xxx", 
-            "password": "xxx"
-        },
-        ...
+            "password": "xxx",
+            "tel": "xxx"
+        }
     ],
 
-    "booking_time": "2026-03-15 14:35:00.0",
+    "booking_time": "2026-04-08 06:59:57.5",
+    
+    "retry_times": 10,
 
     "courts":
     [
         {
             "campus": "Fenglin",
-            "date": "2026-03-17",
-            "time": "20:00-21:00"
+            "date": "2026-04-10",
+            "time": "19:00-20:00"
         },
         {
             "campus": "Fenglin",
-            "date": "2026-03-17",
-            "time": "19:00-20:00"
-        },
-        ...
+            "date": "2026-04-10",
+            "time": "20:00-21:00"
+        }
     ]
 }
 ```
 in which "booking_time" denotes the reservation time (decimal **CANNOT** be omitted), usually two days prior to the court date. (However, it is recommended to set an earlier time, like 06:59:57.5, and increase retry_times to contend with network congestion.)
 
-2. Simply run multiple_plus.py (reserve at certain time, retry quickly if it fails) **OR** watch.py (check every few seconds and reserve once available). If you choose the latter, parameter "booking_time" will be ignored.
+2. Simply run multiple_plus.py (reserve at certain time, retry quickly if it fails) **OR** watch.py (check every few seconds and reserve once available). If you choose the latter, parameter "booking_time" and "retry_times" will be ignored.
 
 ### IMPORTANT NOTES
 
