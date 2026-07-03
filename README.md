@@ -7,7 +7,7 @@ In short, this is a selenium-based python script that helps to reserve sports co
 Files in this repository are listed as follows:
 
 - **[LearnSelenium.ipynb](LearnSelenium.ipynb)**. A brief selenium tutorial. It is basically all you need to understand the code in the script.
-- **derpecated/[single.py](single.py)**. The primary version of the script with basic waiting mechanism, designed for single-court reservation only.
+- **deprecated/[single.py](single.py)**. The primary version of the script with basic waiting mechanism, designed for single-court reservation only.
 - **deprecated/[multiple.py](multiple.py)**. The second version of the booking script, capable of multiple-court reservation.
 ---
 - **[CourtReserver.py](CourtReserver.py)**. The class.
@@ -20,7 +20,7 @@ Files in this repository are listed as follows:
 
 - Python 3.13.3
 - Selenium 4.40.0
-- Microsoft Edge and its Driver 144.0.3719.115
+- Chrome 150.0.7871.47
 
 > To maintain stability, it is strongly recommended to disable the Auto-update of Edge. To do it: 
 >
@@ -74,7 +74,7 @@ in which "booking_time" denotes the reservation time (decimal **CANNOT** be omit
 Successful auto reservation can succeed **ONLY** when:
 
 - Your PC doesn't hibernate or sleep
-- Anti-virus software doesn't stop the script from opening the browser
+- Anti-virus software doesn't stop the script from launching the browser
 - Windows update doesn't reboot your PC when you are asleep
 
 ### Typical Terminal Output
@@ -177,3 +177,4 @@ Below I'd like to elaborate on some important or interesting designs.
     - However, neglect of exceptions can somehow hinder bug-fix if there is any.
 - **Save interruption.** At first, I use scheduler to start the booking thread at exact seven, but `scheduler.run()` will block the thread and preclude Keyboard-Interrupt. Hence, I use cyclic sleep instead. A stop-event was defined: once set, the loop will break.
   - It is worth mentioning that scheduler can achieve the precision of 0.0005s, but cyclic sleep only 0.002s. However, that's still acceptable.
+- **Anti-anti-crawler.** The script functions well at the beginning of this semester, but suddenly the automated browser only returned a blank page after driver.get() was called. Then I use undetected_chromedriver to replace the original driver.
