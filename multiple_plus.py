@@ -71,6 +71,12 @@ if __name__ == "__main__":
     try:
         while threading.active_count() > 1: # 除主线程外还有别的线程在运行.
             time.sleep(1)
+        print(f'[{time_stamp()}] 所有线程均已正常结束. 由于undetected_chromedriver与python进程绑定, 为保证浏览器不关闭需要ctrl+c手动退出...')
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
     except KeyboardInterrupt:
         stop_event.set()
         print(f'[{time_stamp()}] 强制退出...')

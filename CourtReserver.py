@@ -1,7 +1,6 @@
 # 2026.2.14 started By FloralDew
 from selenium import webdriver
-from selenium.webdriver.edge.options import Options
-from selenium.webdriver.edge.service import Service
+import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 # 显式等待
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,12 +14,12 @@ import re
 # 盯场的退出
 import threading
 
-time_stamp = lambda: datetime.now().strftime("%H:%M:%S.%f") # 时间格式化输出
+time_stamp = lambda: datetime.now().strftime("%H:%M:%S.%f")[:-3] # 时间格式化输出
 
 class WebController():
 
     def wait_send_keys(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
-                         text, timeout=10, poll_freq=0.1, clear=False): # 等待输入框并输入内容. 私有方法
+                         text, timeout=15, poll_freq=0.1, clear=False): # 等待输入框并输入内容. 私有方法
         wait = WebDriverWait(
             self.driver,
             timeout,
@@ -42,7 +41,7 @@ class WebController():
 
     # 等待并点击元素(自动处理遮挡/刷新)
     def wait_click(self, mark: webdriver.remote.webelement.WebElement | tuple[str, str], 
-                     timeout=10, poll_freq=0.1):
+                     timeout=15, poll_freq=0.1):
         # 输入webElement时, 警惕Stale造成的TimeOut错误
         wait = WebDriverWait(
             self.driver,
@@ -91,10 +90,8 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
 
         print(f"[{time_stamp()}](线程{thread_num}) 开始启动浏览器.")
         # 创建并启动浏览器
-        browser_option = Options()
-        browser_option.add_argument('--no-sandbox')
-        browser_option.add_experimental_option('detach', True)
-        driver = webdriver.Edge(service=Service(r"./MsEdgeDriver/msedgedriver.exe"), options=browser_option)
+        browser_options = uc.ChromeOptions()
+        driver = uc.Chrome(options=browser_options)
         driver.implicitly_wait(10)
         driver.maximize_window()
         self.driver = driver
@@ -115,7 +112,7 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
                 self.wait_send_keys((By.ID, "login-password"), password)
                 bflag = True
             except Exception as e: # 有时候网页未能正常打开
-                print(f"[{time_stamp()}](线程{thread_num}) 浏览器启动遇到问题. {str(e)[:70]}..., 正在刷新...")
+                print(f"[{time_stamp()}](线程{thread_num}) 浏览器启动遇到问题. {str(e)[:20000]}..., 正在刷新...")
                 driver.refresh()
         
         # 点击"登录"按钮
@@ -124,8 +121,9 @@ class CourtReserver(WebController): # 封装成类, 便于管理和维护
         # 此时可能弹出确认框, 但这不是alert框. 如有, 点击确认
         try:
             print(f"[{time_stamp()}](线程{thread_num}) 判断是否弹出了对话框...")
-            # 第一个div到底是4还是5? 在寝室电脑上是4
-            confirm_btn = driver.find_element(By.XPATH, '/html/body/div[4]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button')
+            # 第一个div到底是4还是5? 在寝室电脑上是4.
+            # 7/3/2026更新: 又变成了5
+            confirm_btn = driver.find_element(By.XPATH, '/html/body/div[5]/div/div/div[1]/div/div[3]/div[2]/div[2]/div[2]/button')
             print(f"[{time_stamp()}](线程{thread_num}) 弹出了对话框. 点击确认.")
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", confirm_btn) # 防止ElementClickInterceptedException
             time.sleep(1) # 增强鲁棒性, 等待可能的滚动动画
